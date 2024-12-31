@@ -1,0 +1,12 @@
+spring:
+  main:
+    banner-mode: OFF
+  application:
+    name: FinderUnited
+  data:
+    mongodb:
+      uri: ${SPRING_MONGODB_URI}
+      database: FinderUnited
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+
