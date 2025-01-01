@@ -3,7 +3,7 @@ version: 0.1
 phases:
   pre_build:
     commands:
-      - mvn clean install
+      - mvn clean install -U
       - echo Logging in to Amazon ECR...
       - aws --version
       - echo $REPOSITORY_URI
