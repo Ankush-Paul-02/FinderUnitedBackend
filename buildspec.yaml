@@ -1,15 +1,19 @@
 version: 0.1
 
 phases:
-  pre_build: # Login to ecr and adding commit hash and image tag
+  pre_build:
     commands:
       - mvn clean install
       - echo Logging in to Amazon ECR...
       - aws --version
-      - REPOSITORY_URI=820242940845.dkr.ecr.ap-south-1.amazonaws.com/devamre-ecr
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - echo $REPOSITORY_URI
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI || echo "Docker login failed"
+      - echo "Login successful"
+      - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - echo $COMMIT_HASH
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+      - echo $IMAGE_TAG
   build: # build and tag the docker image
     commands:
       - echo Build started on `date`
