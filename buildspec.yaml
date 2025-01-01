@@ -8,7 +8,12 @@ phases:
       - echo Logging in to Amazon ECR...
       - aws --version
       - echo "Repository URI: $REPOSITORY_URI"
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI || echo "Docker login failed" && exit 1
+      - |
+        docker_login_result=$(aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI)
+        if [ $? -ne 0 ]; then
+          echo "Docker login failed"
+          exit 1
+        fi
       - echo "Login successful"
       - echo "Commit hash: $CODEBUILD_RESOLVED_SOURCE_VERSION"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
@@ -20,17 +25,37 @@ phases:
     commands:
       - echo "Build started on $(date)"
       - echo "Building the Docker image..."
-      - docker build -t $REPOSITORY_URI:latest . || echo "Docker build failed" && exit 1
+      - |
+        docker build -t $REPOSITORY_URI:latest .
+        if [ $? -ne 0 ]; then
+          echo "Docker build failed"
+          exit 1
+        fi
       - echo "Docker build completed"
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG || echo "Docker tag failed" && exit 1
+      - |
+        docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+        if [ $? -ne 0 ]; then
+          echo "Docker tag failed"
+          exit 1
+        fi
       - echo "Docker tag completed"
 
   post_build:
     commands:
       - echo "Build completed on $(date)"
       - echo "Pushing the Docker images..."
-      - docker push $REPOSITORY_URI:latest || echo "Docker push failed" && exit 1
-      - docker push $REPOSITORY_URI:$IMAGE_TAG || echo "Docker push with IMAGE_TAG failed" && exit 1
+      - |
+        docker push $REPOSITORY_URI:latest
+        if [ $? -ne 0 ]; then
+          echo "Docker push failed"
+          exit 1
+        fi
+      - |
+        docker push $REPOSITORY_URI:$IMAGE_TAG
+        if [ $? -ne 0 ]; then
+          echo "Docker push with IMAGE_TAG failed"
+          exit 1
+        fi
       - echo "Writing image definitions file..."
       - DOCKER_CONTAINER_NAME=devamre-ecr
       - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
