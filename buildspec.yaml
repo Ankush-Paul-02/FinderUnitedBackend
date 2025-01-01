@@ -3,7 +3,8 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - mvn clean install -U
+      - REPOSITORY_URI=820242940845.dkr.ecr.ap-south-1.amazonaws.com/devamre-ecr
+      - mvn clean install -U | tee mvn_build.log
       - echo Logging in to Amazon ECR...
       - aws --version
       - echo $REPOSITORY_URI
