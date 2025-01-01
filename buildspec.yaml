@@ -7,36 +7,34 @@ phases:
       - mvn clean install -U | tee mvn_build.log
       - echo Logging in to Amazon ECR...
       - aws --version
-      - echo $REPOSITORY_URI
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI || echo "Docker login failed"
+      - echo "Repository URI: $REPOSITORY_URI"
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI || { echo "Docker login failed"; exit 1; }
       - echo "Login successful"
-      - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo "Commit hash: $CODEBUILD_RESOLVED_SOURCE_VERSION"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - echo $COMMIT_HASH
+      - echo "Short commit hash: $COMMIT_HASH"
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
-      - echo $IMAGE_TAG
+      - echo "Image tag: $IMAGE_TAG"
+
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...
-      - docker build -t $REPOSITORY_URI:latest . || echo "Docker build failed"
-      - echo Docker build completed
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG || echo "Docker tag failed"
-      - echo Docker tag completed
+      - echo "Build started on $(date)"
+      - echo "Building the Docker image..."
+      - docker build -t $REPOSITORY_URI:latest . || { echo "Docker build failed"; exit 1; }
+      - echo "Docker build completed"
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG || { echo "Docker tag failed"; exit 1; }
+      - echo "Docker tag completed"
 
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing the Docker images...
-      - docker push $REPOSITORY_URI:latest || echo "Docker push failed"
-      - docker push $REPOSITORY_URI:$IMAGE_TAG || echo "Docker push with IMAGE_TAG failed"
-      - echo Writing image definitions file...
-      - printf '[{"name":"Finder-United","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-      - echo Writing image definitions file...
+      - echo "Build completed on $(date)"
+      - echo "Pushing the Docker images..."
+      - docker push $REPOSITORY_URI:latest || { echo "Docker push failed"; exit 1; }
+      - docker push $REPOSITORY_URI:$IMAGE_TAG || { echo "Docker push with IMAGE_TAG failed"; exit 1; }
+      - echo "Writing image definitions file..."
       - DOCKER_CONTAINER_NAME=devamre-ecr
       - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-      - echo $DOCKER_CONTAINER_NAME
-      - echo printing imagedefinitions.json
+      - echo "Image definitions file created:"
       - cat imagedefinitions.json
 
 artifacts:
