@@ -3,66 +3,35 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - REPOSITORY_URI=820242940845.dkr.ecr.ap-south-1.amazonaws.com/devamre-ecr
-      - mvn clean install -U | tee mvn_build.log
+      - mvn clean install
       - echo Logging in to Amazon ECR...
       - aws --version
-      - echo "Repository URI: $REPOSITORY_URI"
-      - |
-        docker_login_result=$(aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI)
-        if [ $? -ne 0 ]; then
-          echo "Docker login failed"
-          exit 1
-        fi
-      - echo "Login successful"
-      - echo "Commit hash: $CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - REPOSITORY_URI=820242940845.dkr.ecr.ap-south-1.amazonaws.com/devamre-ecr
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 820242940845.dkr.ecr.ap-south-1.amazonaws.com
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - echo "Short commit hash: $COMMIT_HASH"
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
-      - echo "Image tag: $IMAGE_TAG"
-
   build:
     commands:
-      - echo "Build started on $(date)"
-      - echo "Building the Docker image..."
-      - |
-        docker build -t $REPOSITORY_URI:latest .
-        if [ $? -ne 0 ]; then
-          echo "Docker build failed"
-          exit 1
-        fi
-      - echo "Docker build completed"
-      - |
-        docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
-        if [ $? -ne 0 ]; then
-          echo "Docker tag failed"
-          exit 1
-        fi
-      - echo "Docker tag completed"
-
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
-      - echo "Build completed on $(date)"
-      - echo "Pushing the Docker images..."
-      - |
-        docker push $REPOSITORY_URI:latest
-        if [ $? -ne 0 ]; then
-          echo "Docker push failed"
-          exit 1
-        fi
-      - |
-        docker push $REPOSITORY_URI:$IMAGE_TAG
-        if [ $? -ne 0 ]; then
-          echo "Docker push with IMAGE_TAG failed"
-          exit 1
-        fi
-      - echo "Writing image definitions file..."
-      - DOCKER_CONTAINER_NAME=devamre-ecr
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Writing image definitions file...
+      - printf '[{"name":"FinderUnited-1.0.0.jar","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo Writing image definitions file...
+      - DOCKER_CONTAINER_NAME=javatechie-registry
       - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-      - echo "Image definitions file created:"
+      - echo $DOCKER_CONTAINER_NAME
+      - echo printing imagedefinitions.json
       - cat imagedefinitions.json
 
 artifacts:
   files:
     - imagedefinitions.json
-    - target/FinderUnited-1.0.0.jar
+    - target/FinderUnited-1.0.0.jar.jar
