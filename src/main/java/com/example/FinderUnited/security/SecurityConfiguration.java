@@ -27,16 +27,21 @@ public class SecurityConfiguration {
         httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
-                        request -> request.requestMatchers(
-                                        "/api/v1/**"
+                        request -> request
+                                .requestMatchers(
+                                        "/auth/**",
+                                        "/test/**"
                                 )
                                 .permitAll()
-                                .requestMatchers("/api/v1/admin/**").hasAnyAuthority(Role.ADMIN.name())
-                                .requestMatchers("/api/v1/user/**").hasAnyAuthority(Role.USER.name())
-                                .anyRequest().authenticated()
+                                .requestMatchers("/success/**").hasAnyAuthority(Role.ADMIN.name(), Role.USER.name())
+                                .requestMatchers("/admin/**").hasAnyAuthority(Role.ADMIN.name())
+                                .requestMatchers("/user/**").hasAnyAuthority(Role.USER.name())
+                                .anyRequest()
+                                .authenticated()
                 )
                 .exceptionHandling(
-                        ex -> ex.authenticationEntryPoint(
+                        ex -> ex
+                                .authenticationEntryPoint(
                                         (request, response, authException) -> {
                                             throw new AuthenticationEntryPointException(authException.getMessage());
                                         }

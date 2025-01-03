@@ -1,4 +1,4 @@
-FROM openjdk:17
+FROM amazoncorretto:17
 WORKDIR /app
 COPY ./target/FinderUnited-1.0.0.jar /app
 EXPOSE 8080

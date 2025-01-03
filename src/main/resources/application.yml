@@ -1,11 +1,14 @@
 server:
+  servlet:
+    context-path: /api/v1
+  port: ${PORT:8081}
   error:
     whitelabel:
       enabled: false
 spring:
   profiles:
     active:
-      - dev
+      - ${ACTIVE_PROFILE:dev}
   main:
     banner-mode: OFF
   application:
