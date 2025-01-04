@@ -48,6 +48,8 @@ public class User implements UserDetails {
     @NotNull(message = "Role is required")
     private Role role;
 
+    private List<String> itemIds;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
