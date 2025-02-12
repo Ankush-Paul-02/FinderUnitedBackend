@@ -14,7 +14,11 @@ import com.example.FinderUnited.data.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +48,7 @@ public class ItemServiceImpl implements ItemService {
                 .founderId(user.getId())
                 .status(ItemStatus.FOUND)
                 .createdAt(System.currentTimeMillis())
+                .requestClaimers(new HashSet<>())
                 .build();
         return itemRepository.save(item);
     }
@@ -83,5 +88,46 @@ public class ItemServiceImpl implements ItemService {
             }
         }
         return items;
+    }
+
+    @Override
+    public Item claimItem(String itemId) {
+        User user = authenticationService.getAuthenticatedUser();
+
+        Optional<Item> optionalItem = itemRepository.findById(itemId);
+        if (optionalItem.isEmpty()) {
+            throw new UserInfoException("Item is not found!");
+        }
+        Item item = optionalItem.get();
+        if (item.getRequestClaimers() == null) {
+            item.setRequestClaimers(new HashSet<>());
+        }
+
+        if (user.getItemIds() == null) {
+            user.setItemIds(new HashSet<>());
+        }
+        if (item.getRequestClaimers().contains(user.getId())) {
+            item.getRequestClaimers().remove(user.getId());
+            user.getItemIds().remove(itemId);
+        } else {
+            item.getRequestClaimers().add(user.getId());
+            user.getItemIds().add(itemId);
+        }
+        userRepository.save(user);
+        return itemRepository.save(item);
+    }
+
+    @Override
+    public Set<Item> claimedItemsByUser() {
+        User user = authenticationService.getAuthenticatedUser();
+        return user.getItemIds().stream().map(
+                id -> {
+                    Optional<Item> optionalItem = itemRepository.findById(id);
+                    if (optionalItem.isEmpty()) {
+                        throw new UserInfoException("Invalid id " + id);
+                    }
+                    return optionalItem.get();
+                }
+        ).collect(Collectors.toSet());
     }
 }

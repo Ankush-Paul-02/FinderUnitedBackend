@@ -5,6 +5,8 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Set;
+
 @Setter
 @Getter
 @Builder
@@ -29,4 +31,6 @@ public class Item {
     private ItemStatus status;
 
     private Long createdAt;
+
+    private Set<String> requestClaimers;
 }
