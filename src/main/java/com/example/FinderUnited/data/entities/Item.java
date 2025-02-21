@@ -3,6 +3,7 @@ package com.example.FinderUnited.data.entities;
 import com.example.FinderUnited.data.enums.ItemStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Set;
@@ -33,4 +34,8 @@ public class Item {
     private Long createdAt;
 
     private Set<String> requestClaimers;
+
+    //? Enable optimistic locking
+    @Version
+    private Long version;
 }

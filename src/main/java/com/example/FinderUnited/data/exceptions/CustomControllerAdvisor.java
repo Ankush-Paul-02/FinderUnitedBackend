@@ -1,10 +1,7 @@
 package com.example.FinderUnited.data.exceptions;
 
 import com.example.FinderUnited.business.dto.DefaultResponseDto;
-import com.example.FinderUnited.business.service.exceptions.AuthenticationEntryPointException;
-import com.example.FinderUnited.business.service.exceptions.JWTException;
-import com.example.FinderUnited.business.service.exceptions.UnauthorizedException;
-import com.example.FinderUnited.business.service.exceptions.UserInfoException;
+import com.example.FinderUnited.business.service.exceptions.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -73,5 +70,10 @@ public class CustomControllerAdvisor {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<DefaultResponseDto> handleIllegalArgumentException(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(500).body(new DefaultResponseDto(FAILED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConcurrencyException.class)
+    public ResponseEntity<DefaultResponseDto> handleConcurrencyException(ConcurrencyException ex) {
+        return ResponseEntity.status(409).body(new DefaultResponseDto(FAILED, ex.getMessage()));
     }
 }

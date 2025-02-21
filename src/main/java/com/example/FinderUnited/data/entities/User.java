@@ -4,6 +4,7 @@ import com.example.FinderUnited.data.enums.Role;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
@@ -50,6 +51,10 @@ public class User implements UserDetails {
     private Role role;
 
     private Set<String> itemIds;
+
+    //? Enables optimistic locking
+    @Version
+    private Long version;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
